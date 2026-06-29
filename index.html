@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>⚛️ Modelos Atómicos</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Courier New', monospace;
+    background: #020617;
+    color: #e2e8f0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  header {
+    width: 100%;
+    padding: 14px 16px 10px;
+    background: #0f172a;
+    border-bottom: 1px solid #1e3a5f;
+    text-align: center;
+  }
+
+  header h1 {
+    font-size: 18px;
+    letter-spacing: 0.15em;
+    color: #7dd3fc;
+    text-transform: uppercase;
+  }
+
+  header p {
+    font-size: 10px;
+    color: #475569;
+    letter-spacing: 0.1em;
+    margin-top: 2px;
+  }
+
+  /* Model tabs */
+  #tabs {
+    display: flex;
+    width: 100%;
+    overflow-x: auto;
+    background: #0f172a;
+    border-bottom: 1px solid #1e293b;
+    scrollbar-width: none;
+  }
+  #tabs::-webkit-scrollbar { display: none; }
+
+  .tab {
+    flex: 0 0 auto;
+    padding: 10px 14px;
+    font-size: 11px;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.08em;
+    color: #64748b;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: color 0.2s, border-color 0.2s;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+  }
+  .tab:hover { color: #94a3b8; }
+  .tab.ativo {
+    color: #38bdf8;
+    border-bottom-color: #38bdf8;
+  }
+
+  /* Canvas area */
+  #arena {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+    background: #020617;
+  }
+
+  /* Description pill */
+  #desc-box {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid #1e3a5f;
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: #7dd3fc;
+    white-space: nowrap;
+    backdrop-filter: blur(4px);
+  }
+
+  /* Year badge */
+  #ano-badge {
+    position: absolute;
+    bottom: 10px;
+    right: 12px;
+    font-size: 28px;
+    font-weight: bold;
+    color: rgba(56, 189, 248, 0.12);
+    letter-spacing: -1px;
+    pointer-events: none;
+    font-family: 'Courier New', monospace;
+  }
+
+  /* Controls */
+  #controles {
+    width: 100%;
+    max-width: 420px;
+    padding: 14px 16px;
+    background: #0f172a;
+    border-top: 1px solid #1e293b;
+  }
+
+  .ctrl-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .ctrl-label {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: #64748b;
+    min-width: 80px;
+    text-transform: uppercase;
+  }
+
+  .ctrl-val {
+    font-size: 12px;
+    color: #38bdf8;
+    min-width: 24px;
+    text-align: right;
+    font-family: 'Courier New', monospace;
+  }
+
+  input[type=range] {
+    flex: 1;
+    -webkit-appearance: none;
+    height: 3px;
+    background: #1e293b;
+    border-radius: 2px;
+    outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    background: #38bdf8;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #0f172a;
+  }
+
+  /* Buttons */
+  #botoes {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .btn {
+    flex: 1;
+    padding: 11px 0;
+    font-size: 12px;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.08em;
+    border: 1px solid #1e3a5f;
+    border-radius: 8px;
+    background: #0f172a;
+    color: #7dd3fc;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .btn:active {
+    background: #1e3a5f;
+    color: #e0f2fe;
+  }
+
+  /* Info expandable */
+  #info-panel {
+    width: 100%;
+    max-width: 420px;
+    padding: 0 16px 20px;
+    font-size: 11px;
+    line-height: 1.7;
+    color: #64748b;
+    letter-spacing: 0.03em;
+  }
+
+  #info-panel strong { color: #94a3b8; }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .info-card {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .info-card .titulo {
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    color: #475569;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .info-card .valor {
+    font-size: 13px;
+    color: #38bdf8;
+    font-weight: bold;
+  }
+
+  /* Orbital selector — only visible in quantum mode */
+  #orbital-selector {
+    display: none;
+    width: 100%;
+    max-width: 420px;
+    background: #0a1628;
+    border-bottom: 1px solid #1e293b;
+    padding: 8px 12px;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  #orbital-selector.visivel { display: flex; }
+
+  .otab {
+    padding: 6px 14px;
+    font-size: 11px;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.1em;
+    color: #475569;
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .otab:hover { color: #7dd3fc; border-color: #1e3a5f; }
+  .otab.ativo {
+    background: #0c2d4a;
+    color: #38bdf8;
+    border-color: #38bdf8;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚛ Modelos Atómicos</h1>
+  <p>VISUALIZADOR INTERACTIVO · QUÍMICA</p>
+</header>
+
+<div id="tabs">
+  <button class="tab ativo" onclick="setModelo('dalton',this)">DALTON</button>
+  <button class="tab" onclick="setModelo('thomson',this)">THOMSON</button>
+  <button class="tab" onclick="setModelo('rutherford',this)">RUTHERFORD</button>
+  <button class="tab" onclick="setModelo('bohr',this)">BOHR</button>
+  <button class="tab" onclick="setModelo('quantico',this)">CUÁNTICO</button>
+</div>
+
+
+<!-- Orbital selector (quantum only) -->
+<div id="orbital-selector">
+  <button class="otab ativo" onclick="setOrbital('s',this)">1s</button>
+  <button class="otab" onclick="setOrbital('p',this)">2p</button>
+  <button class="otab" onclick="setOrbital('dz2',this)">3d z²</button>
+  <button class="otab" onclick="setOrbital('dxy',this)">3d xy</button>
+  <button class="otab" onclick="setOrbital('dx2y2',this)">3d x²-y²</button>
+  <button class="otab" onclick="setOrbital('fz3',this)">4f z³</button>
+  <button class="otab" onclick="setOrbital('fxyz',this)">4f xyz</button>
+</div>
+
+<div id="arena">
+  <canvas id="c" width="420" height="380"></canvas>
+  <div id="desc-box">esfera maciza indivisible</div>
+  <div id="ano-badge">1808</div>
+</div>
+
+<div id="controles">
+  <div class="ctrl-row">
+    <span class="ctrl-label">Electrones</span>
+    <input type="range" id="eletrons" min="1" max="18" value="6" oninput="document.getElementById('val-e').textContent=this.value">
+    <span class="ctrl-val" id="val-e">6</span>
+  </div>
+  <div class="ctrl-row">
+    <span class="ctrl-label">Velocidad</span>
+    <input type="range" id="vel" min="1" max="10" value="3" oninput="document.getElementById('val-v').textContent=this.value">
+    <span class="ctrl-val" id="val-v">3</span>
+  </div>
+  <div id="botoes">
+    <button class="btn" onclick="togglePause()">⏯ PAUSAR</button>
+    <button class="btn" onclick="resetAnim()">↺ RESET</button>
+  </div>
+</div>
+
+<div id="info-panel">
+  <div id="info-texto"></div>
+  <div class="info-grid" id="info-grid"></div>
+</div>
+
+<script>
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+const W = 420, H = 380, CX = W/2, CY = H/2;
+
+let modelo = "dalton";
+let rodando = true;
+let t = 0;
+let particulas = []; // Thomson floating electrons
+let orbitalAtual = 's'; // quantum orbital type
+
+const dados = {
+  dalton: {
+    desc: "esfera maciza indivisible",
+    año: "1808",
+    científico: "John Dalton",
+    concepto: "Átomo sólido",
+    texto: "Dalton propuso que la materia está compuesta de esferas macizas e indivisibles. Los átomos del mismo elemento son idénticos."
+  },
+  thomson: {
+    desc: "electrones en la masa positiva",
+    año: "1897",
+    científico: "J.J. Thomson",
+    concepto: "Pudín de pasas",
+    texto: "Thomson descubrió el electrón y propuso un átomo como esfera positiva con electrones negativos distribuidos internamente."
+  },
+  rutherford: {
+    desc: "núcleo denso + electrones libres",
+    año: "1911",
+    científico: "E. Rutherford",
+    concepto: "Núcleo central",
+    texto: "El experimento de la lámina de oro reveló un núcleo pequeño y denso, con electrones orbitando a gran distancia."
+  },
+  bohr: {
+    desc: "electrones en órbitas definidas",
+    año: "1913",
+    científico: "Niels Bohr",
+    concepto: "Capas electrónicas",
+    texto: "Bohr cuantizó las órbitas: los electrones solo existen en capas específicas de energía, sin irradiar al orbitarlas."
+  },
+  quantico: {
+    desc: "orbital · nube de probabilidad",
+    año: "1926",
+    científico: "Schrödinger / Heisenberg",
+    concepto: "Orbital cuántico",
+    texto: "El modelo cuántico describe orbitales — regiones de probabilidad con formas características (s, p, d) donde puede encontrarse el electrón. Nunca una trayectoria exacta."
+  }
+};
+
+function setModelo(m, el) {
+  modelo = m;
+  t = 0;
+  particulas = [];
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('ativo'));
+  el.classList.add('ativo');
+  // Show orbital selector only for quantum model
+  const os = document.getElementById('orbital-selector');
+  if (m === 'quantico') os.classList.add('visivel');
+  else os.classList.remove('visivel');
+  atualizarInfo();
+}
+
+function setOrbital(tipo, el) {
+  orbitalAtual = tipo;
+  document.querySelectorAll('.otab').forEach(t => t.classList.remove('ativo'));
+  el.classList.add('ativo');
+}
+
+function atualizarInfo() {
+  const d = dados[modelo];
+  document.getElementById('desc-box').textContent = d.desc;
+  document.getElementById('ano-badge').textContent = d.ano;
+  document.getElementById('info-texto').innerHTML = `<strong>${d.científico} (${d.año})</strong> — ${d.texto}`;
+  document.getElementById('info-grid').innerHTML = `
+    <div class="info-card"><div class="titulo">Científico</div><div class="valor" style="font-size:11px;color:#94a3b8">${d.científico}</div></div>
+    <div class="info-card"><div class="titulo">Concepto</div><div class="valor" style="font-size:11px;color:#94a3b8">${d.concepto}</div></div>
+    <div class="info-card"><div class="titulo">Año</div><div class="valor">${d.año}</div></div>
+    <div class="info-card"><div class="titulo">Modelo</div><div class="valor" style="font-size:10px;color:#7dd3fc">${modelo.toUpperCase()}</div></div>
+  `;
+}
+
+function togglePause() { rodando = !rodando; }
+function resetAnim() { t = 0; particulas = []; }
+
+// Thomson particles init
+function initThomson(n) {
+  particulas = [];
+  for (let i = 0; i < n; i++) {
+    const ang = (i / n) * Math.PI * 2;
+    const r = 30 + Math.random() * 35;
+    particulas.push({
+      x: CX + Math.cos(ang)*r,
+      y: CY + Math.sin(ang)*r,
+      vx: (Math.random()-0.5)*1.4,
+      vy: (Math.random()-0.5)*1.4,
+      r: 6, // radius for collision
+    });
+  }
+}
+
+// Elastic collision between two Thomson electrons
+function colisaoElastica(a, b) {
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  if (dist === 0 || dist > a.r + b.r) return;
+  // Overlap correction
+  const overlap = (a.r + b.r - dist) / 2;
+  const nx = dx/dist, ny = dy/dist;
+  a.x -= nx * overlap; a.y -= ny * overlap;
+  b.x += nx * overlap; b.y += ny * overlap;
+  // Velocity exchange along normal
+  const dvx = a.vx - b.vx, dvy = a.vy - b.vy;
+  const dot = dvx*nx + dvy*ny;
+  if (dot > 0) return; // already separating
+  a.vx -= dot*nx; a.vy -= dot*ny;
+  b.vx += dot*nx; b.vy += dot*ny;
+}
+
+// Glow helper
+function glow(color, blur=18) {
+  ctx.shadowColor = color;
+  ctx.shadowBlur = blur;
+}
+function noGlow() { ctx.shadowBlur = 0; }
+
+// Drawing functions
+function desenharDalton(e) {
+  // Gradient sphere
+  const grad = ctx.createRadialGradient(CX-20, CY-20, 5, CX, CY, 90);
+  grad.addColorStop(0, '#fb923c');
+  grad.addColorStop(0.5, '#ea580c');
+  grad.addColorStop(1, '#7c2d12');
+  glow('#fb923c', 30);
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(CX, CY, 90, 0, Math.PI*2);
+  ctx.fill();
+  noGlow();
+
+  // Label
+  ctx.fillStyle = 'rgba(255,255,255,0.15)';
+  ctx.font = 'bold 22px Courier New';
+  ctx.textAlign = 'center';
+  ctx.fillText('●', CX, CY+8);
+}
+
+function desenharThomson(e) {
+  if (particulas.length !== e) initThomson(e);
+
+  // Outer sphere
+  const grad = ctx.createRadialGradient(CX-20, CY-20, 10, CX, CY, 95);
+  grad.addColorStop(0, 'rgba(100,120,180,0.5)');
+  grad.addColorStop(1, 'rgba(30,50,100,0.3)');
+  ctx.fillStyle = grad;
+  glow('#6366f1', 20);
+  ctx.beginPath();
+  ctx.arc(CX, CY, 90, 0, Math.PI*2);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(99,102,241,0.4)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  noGlow();
+
+  const velScale = parseFloat(document.getElementById('vel').value) * 0.3;
+  const RAIO_NUCLEO = 78; // confinement radius
+
+  // Physics step
+  particulas.forEach(p => {
+    p.x += p.vx * velScale;
+    p.y += p.vy * velScale;
+    // Bounce off sphere wall
+    const dx = p.x - CX, dy = p.y - CY;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    if (dist + p.r > RAIO_NUCLEO) {
+      const nx = dx/dist, ny = dy/dist;
+      // Push back inside
+      p.x = CX + nx*(RAIO_NUCLEO - p.r - 0.5);
+      p.y = CY + ny*(RAIO_NUCLEO - p.r - 0.5);
+      // Reflect velocity
+      const dot = p.vx*nx + p.vy*ny;
+      p.vx -= 2*dot*nx;
+      p.vy -= 2*dot*ny;
+    }
+  });
+
+  // Electron-electron collisions
+  for (let i = 0; i < particulas.length; i++)
+    for (let j = i+1; j < particulas.length; j++)
+      colisaoElastica(particulas[i], particulas[j]);
+
+  // Draw electrons with flash on proximity
+  particulas.forEach((p, idx) => {
+    // Check if any neighbor is close (collision glow)
+    let coliding = false;
+    for (let j = 0; j < particulas.length; j++) {
+      if (j === idx) continue;
+      const ddx = p.x - particulas[j].x, ddy = p.y - particulas[j].y;
+      if (Math.sqrt(ddx*ddx+ddy*ddy) < p.r*2.5) { coliding = true; break; }
+    }
+
+    if (coliding) {
+      glow('#ffffff', 22);
+    } else {
+      glow('#22d3ee', 12);
+    }
+    const eg = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r);
+    eg.addColorStop(0, coliding ? '#ffffff' : '#e0f2fe');
+    eg.addColorStop(1, coliding ? '#f0abfc' : '#0ea5e9');
+    ctx.fillStyle = eg;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+    ctx.fill();
+    noGlow();
+    ctx.fillStyle = coliding ? '#fde68a' : '#7dd3fc';
+    ctx.font = '7px Courier New';
+    ctx.textAlign = 'center';
+    ctx.fillText('e⁻', p.x, p.y + p.r + 8);
+  });
+}
+
+function desenharRutherford(e) {
+  const v = parseFloat(document.getElementById('vel').value) * 0.008;
+
+  // Define 3 distinct elliptical orbits with fixed tilt angles
+  const orbitas = [
+    { a: 130, b: 45,  tilt: 0 },
+    { a: 115, b: 55,  tilt: Math.PI/3 },
+    { a: 100, b: 60,  tilt: -Math.PI/4 },
+  ];
+
+  // Draw ellipse paths first
+  orbitas.forEach(o => {
+    ctx.save();
+    ctx.translate(CX, CY);
+    ctx.rotate(o.tilt);
+    ctx.strokeStyle = 'rgba(56,189,248,0.18)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3,5]);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, o.a, o.b, 0, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+  });
+
+  // Nucleus
+  const ng = ctx.createRadialGradient(CX-2, CY-2, 0, CX, CY, 12);
+  ng.addColorStop(0, '#fde68a');
+  ng.addColorStop(0.5, '#f59e0b');
+  ng.addColorStop(1, '#92400e');
+  glow('#f59e0b', 28);
+  ctx.fillStyle = ng;
+  ctx.beginPath();
+  ctx.arc(CX, CY, 11, 0, Math.PI*2);
+  ctx.fill();
+  noGlow();
+
+  // Place electrons on their elliptical orbits
+  // Distribute electrons across orbits
+  for (let i = 0; i < e; i++) {
+    const orb = orbitas[i % orbitas.length];
+    // Each electron on same orbit gets offset phase
+    const sameOrbit = Math.floor(i / orbitas.length);
+    const totalSame = Math.ceil(e / orbitas.length);
+    const phaseOffset = (sameOrbit / totalSame) * Math.PI * 2;
+
+    // Eccentric anomaly — electron moves faster at periapsis (Kepler-like)
+    const meanAnomaly = t * v * 10 + phaseOffset;
+    // Approximate eccentric anomaly with simple Kepler correction
+    const ecc = Math.sqrt(1 - (orb.b*orb.b)/(orb.a*orb.a));
+    const eccAnomaly = meanAnomaly + ecc * Math.sin(meanAnomaly) * 1.5;
+
+    // Position on ellipse in local frame
+    const lx = orb.a * Math.cos(eccAnomaly);
+    const ly = orb.b * Math.sin(eccAnomaly);
+
+    // Rotate by tilt
+    const ex = CX + lx * Math.cos(orb.tilt) - ly * Math.sin(orb.tilt);
+    const ey = CY + lx * Math.sin(orb.tilt) + ly * Math.cos(orb.tilt);
+
+    // Trail effect
+    for (let tr = 1; tr <= 5; tr++) {
+      const ta = meanAnomaly - tr * 0.12;
+      const te = ta + ecc * Math.sin(ta) * 1.5;
+      const tlx = orb.a * Math.cos(te);
+      const tly = orb.b * Math.sin(te);
+      const tex = CX + tlx * Math.cos(orb.tilt) - tly * Math.sin(orb.tilt);
+      const tey = CY + tlx * Math.sin(orb.tilt) + tly * Math.cos(orb.tilt);
+      ctx.fillStyle = `rgba(34,211,238,${0.12 - tr*0.02})`;
+      ctx.beginPath();
+      ctx.arc(tex, tey, 3 - tr*0.4, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    glow('#22d3ee', 16);
+    const eg = ctx.createRadialGradient(ex, ey, 0, ex, ey, 5);
+    eg.addColorStop(0, '#e0f2fe');
+    eg.addColorStop(1, '#0284c7');
+    ctx.fillStyle = eg;
+    ctx.beginPath();
+    ctx.arc(ex, ey, 5, 0, Math.PI*2);
+    ctx.fill();
+    noGlow();
+  }
+}
+
+function desenharBohr(e) {
+  const camadas = [55, 90, 125, 155];
+  const maxPorCamada = [2, 8, 8, 2];
+
+  // Draw orbits
+  camadas.forEach((r, idx) => {
+    const total = distribuirCamadas(e)[idx] || 0;
+    if (total === 0 && idx > 0) return;
+    ctx.strokeStyle = idx === 0 ? 'rgba(56,189,248,0.3)' : `rgba(56,189,248,${0.15 - idx*0.02})`;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 6]);
+    ctx.beginPath();
+    ctx.arc(CX, CY, r, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  });
+
+  // Nucleus
+  const ng = ctx.createRadialGradient(CX-2, CY-2, 0, CX, CY, 12);
+  ng.addColorStop(0, '#fde68a');
+  ng.addColorStop(1, '#dc2626');
+  glow('#ef4444', 25);
+  ctx.fillStyle = ng;
+  ctx.beginPath();
+  ctx.arc(CX, CY, 10, 0, Math.PI*2);
+  ctx.fill();
+  noGlow();
+
+  // Electrons per layer
+  const dist = distribuirCamadas(e);
+  const v = parseFloat(document.getElementById('vel').value) * 0.008;
+  let eIdx = 0;
+  dist.forEach((qtd, layer) => {
+    if (qtd === 0) return;
+    const r = camadas[layer];
+    for (let i = 0; i < qtd; i++) {
+      const ang = t*v*10 + i*(2*Math.PI/qtd) + layer*0.5;
+      const ex = CX + Math.cos(ang)*r;
+      const ey = CY + Math.sin(ang)*r;
+
+      glow('#22d3ee', 12);
+      const hue = 200 - layer*20;
+      ctx.fillStyle = `hsl(${hue},90%,65%)`;
+      ctx.beginPath();
+      ctx.arc(ex, ey, 5, 0, Math.PI*2);
+      ctx.fill();
+      noGlow();
+      eIdx++;
+    }
+  });
+
+  // Layer labels
+  ctx.font = '9px Courier New';
+  ctx.fillStyle = 'rgba(56,189,248,0.4)';
+  ctx.textAlign = 'left';
+  const letras = ['K','L','M','N'];
+  dist.forEach((qtd, i) => {
+    if (qtd > 0) ctx.fillText(letras[i], CX + camadas[i] + 4, CY - 6);
+  });
+}
+
+function distribuirCamadas(e) {
+  const maxC = [2, 8, 8, 2];
+  const out = [0, 0, 0, 0];
+  let rem = e;
+  for (let i = 0; i < 4 && rem > 0; i++) {
+    const fill = Math.min(rem, maxC[i]);
+    out[i] = fill;
+    rem -= fill;
+  }
+  return out;
+}
+
+// Box-Muller gaussian sample
+function gaussian() {
+  const u1 = Math.random(), u2 = Math.random();
+  return Math.sqrt(-2*Math.log(u1+1e-9)) * Math.cos(2*Math.PI*u2);
+}
+
+// Probability density functions per orbital type
+// Returns [x,y] offset from nucleus for one electron sample
+function sampleOrbital(tipo) {
+  switch(tipo) {
+    case 's': {
+      // Spherical — isotropic gaussian
+      const r = Math.abs(gaussian()) * 62 + 8;
+      const ang = Math.random()*Math.PI*2;
+      return [Math.cos(ang)*r, Math.sin(ang)*r];
+    }
+    case 'p': {
+      // Dumbbell along Y axis — two lobes
+      // Probability ~ cos²(theta), biased to top/bottom
+      const ang = Math.random()*Math.PI*2;
+      const cosT = Math.cos(ang);
+      // Rejection sample: accept with prob cos²
+      if (Math.random() > cosT*cosT) return null;
+      const r = Math.abs(gaussian()) * 70 + 15;
+      return [Math.cos(ang)*r * 0.35, Math.sin(ang)*r];
+    }
+    case 'dz2': {
+      // d_z² — two lobes + torus ring
+      // Two lobes on Y axis + equatorial ring
+      const choice = Math.random();
+      if (choice < 0.7) {
+        // lobes
+        const ang = Math.random()*Math.PI*2;
+        const c2 = Math.cos(ang)*Math.cos(ang);
+        if (Math.random() > c2*c2*1.2) return null;
+        const r = Math.abs(gaussian())*65 + 20;
+        return [Math.cos(ang)*r*0.3, Math.sin(ang)*r];
+      } else {
+        // torus ring
+        const ring_ang = Math.random()*Math.PI*2;
+        const rr = 55 + gaussian()*10;
+        const off = gaussian()*12;
+        return [Math.cos(ring_ang)*rr, Math.sin(ring_ang)*rr*0.25 + off];
+      }
+    }
+    case 'dxy': {
+      // d_xy — four lobes at 45° in x-y plane
+      const ang = Math.random()*Math.PI*2;
+      const s2 = Math.sin(2*ang);
+      if (Math.random() > s2*s2) return null;
+      const r = Math.abs(gaussian())*70 + 18;
+      return [Math.cos(ang)*r, Math.sin(ang)*r];
+    }
+    case 'dx2y2': {
+      // d_x²-y² — four lobes along axes
+      const ang = Math.random()*Math.PI*2;
+      const c2 = Math.cos(2*ang);
+      if (Math.random() > c2*c2) return null;
+      const r = Math.abs(gaussian())*70 + 18;
+      return [Math.cos(ang)*r, Math.sin(ang)*r];
+    }
+    case 'fz3': {
+      // f_z³ — main lobe on Y axis + two side rings
+      // Y_{3,0} ~ cos(theta)*(5cos²theta - 3)
+      const ang = Math.random()*Math.PI*2;
+      const c = Math.cos(ang);
+      const prob = c*c * Math.pow(Math.abs(5*c*c - 3), 1.5) * 0.8;
+      if (Math.random() > prob) return null;
+      const r = Math.abs(gaussian())*72 + 16;
+      return [Math.cos(ang)*r*0.3, Math.sin(ang)*r];
+    }
+    case 'fxyz': {
+      // f_xyz — 8 lobes in octants
+      // Y ~ sin(theta)cos(theta)sin(phi)cos(phi) approx: |sin(2a)*sin(2b)|
+      const ang = Math.random()*Math.PI*2;
+      const ang2 = Math.random()*Math.PI*2;
+      const prob = Math.abs(Math.sin(2*ang)) * Math.abs(Math.sin(2*ang2));
+      if (Math.random() > prob) return null;
+      const r = Math.abs(gaussian())*68 + 18;
+      const scale = 0.75;
+      return [Math.cos(ang)*r*scale, Math.sin(ang)*r*scale];
+    }
+  }
+  return [0,0];
+}
+
+// Orbital shape outlines (drawn as faint guides)
+function desenharContornoOrbital(tipo) {
+  ctx.save();
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3,5]);
+
+  switch(tipo) {
+    case 's':
+      ctx.strokeStyle = 'rgba(56,189,248,0.15)';
+      ctx.beginPath(); ctx.arc(CX, CY, 75, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(CX, CY, 40, 0, Math.PI*2); ctx.stroke();
+      break;
+    case 'p':
+      ctx.strokeStyle = 'rgba(167,139,250,0.18)';
+      // Top lobe
+      ctx.beginPath(); ctx.ellipse(CX, CY-55, 28, 50, 0, 0, Math.PI*2); ctx.stroke();
+      // Bottom lobe
+      ctx.beginPath(); ctx.ellipse(CX, CY+55, 28, 50, 0, 0, Math.PI*2); ctx.stroke();
+      break;
+    case 'dz2':
+      ctx.strokeStyle = 'rgba(52,211,153,0.18)';
+      ctx.beginPath(); ctx.ellipse(CX, CY-60, 22, 55, 0, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(CX, CY+60, 22, 55, 0, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(CX, CY, 60, 16, 0, 0, Math.PI*2); ctx.stroke();
+      break;
+    case 'dxy':
+      ctx.strokeStyle = 'rgba(251,191,36,0.18)';
+      ctx.beginPath(); ctx.ellipse(CX-52, CY-52, 38, 38, Math.PI/4, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(CX+52, CY-52, 38, 38, Math.PI/4, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(CX-52, CY+52, 38, 38, Math.PI/4, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(CX+52, CY+52, 38, 38, Math.PI/4, 0, Math.PI*2); ctx.stroke();
+      break;
+    case 'dx2y2':
+      ctx.strokeStyle = 'rgba(251,146,60,0.18)';
+      ctx.beginPath(); ctx.ellipse(CX, CY-58, 22, 52, 0, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(CX, CY+58, 22, 52, 0, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(CX-58, CY, 52, 22, 0, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(CX+58, CY, 52, 22, 0, 0, Math.PI*2); ctx.stroke();
+      break;
+    case 'fz3':
+      // Main axial lobes + two side rings
+      ctx.strokeStyle = 'rgba(251,113,133,0.18)';
+      ctx.beginPath(); ctx.ellipse(CX, CY-65, 16, 58, 0, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(CX, CY+65, 16, 58, 0, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(CX, CY-28, 42, 12, 0, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(CX, CY+28, 42, 12, 0, 0, Math.PI*2); ctx.stroke();
+      break;
+    case 'fxyz':
+      // 8 lobes — hint as 4 diagonal ellipses
+      ctx.strokeStyle = 'rgba(129,230,217,0.18)';
+      [Math.PI/4, -Math.PI/4, Math.PI*3/4, -Math.PI*3/4].forEach(a => {
+        ctx.beginPath();
+        ctx.ellipse(CX + Math.cos(a)*42, CY + Math.sin(a)*42, 28, 20, a, 0, Math.PI*2);
+        ctx.stroke();
+      });
+      break;
+  }
+  ctx.setLineDash([]);
+  ctx.restore();
+}
+
+const orbitalColors = {
+  s:     [56, 189, 248],   // sky blue
+  p:     [167,139, 250],   // violet
+  dz2:   [52, 211, 153],   // emerald
+  dxy:   [251,191,  36],   // amber
+  dx2y2: [251,146,  60],   // orange
+  fz3:   [251, 113, 133],  // rose
+  fxyz:  [129, 230, 217],  // teal
+};
+
+const orbitalLabels = {
+  s:     'orbital 1s · esférico',
+  p:     'orbital 2p · dos lóbulos',
+  dz2:   'orbital 3d z² · bilobular + toro',
+  dxy:   'orbital 3d xy · cuatro lóbulos (45°)',
+  dx2y2: 'orbital 3d x²-y² · cuatro lóbulos (ejes)',
+  fz3:   'orbital 4f z³ · seis lóbulos axiales',
+  fxyz:  'orbital 4f xyz · ocho lóbulos cúbicos',
+};
+
+function desenharQuantico(e) {
+  const tipo = orbitalAtual;
+  const [r,g,b] = orbitalColors[tipo] || [56,189,248];
+
+  // Update desc-box dynamically
+  document.getElementById('desc-box').textContent = orbitalLabels[tipo] || '';
+
+  // Faint contour guides
+  desenharContornoOrbital(tipo);
+
+  // Probability cloud — sample points
+  const nPts = 350 + e * 20;
+  for (let i = 0; i < nPts; i++) {
+    const pt = sampleOrbital(tipo);
+    if (!pt) continue;
+    const [dx, dy] = pt;
+    const dist = Math.sqrt(dx*dx+dy*dy);
+    if (dist > 170) continue;
+    const alpha = Math.max(0, 0.55 - dist/260);
+    ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
+    ctx.beginPath();
+    ctx.arc(CX+dx, CY+dy, 1.5, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  // Nucleus
+  glow('#ef4444', 18);
+  const ng = ctx.createRadialGradient(CX-1,CY-1,0,CX,CY,7);
+  ng.addColorStop(0,'#fde68a'); ng.addColorStop(1,'#dc2626');
+  ctx.fillStyle = ng;
+  ctx.beginPath(); ctx.arc(CX, CY, 7, 0, Math.PI*2); ctx.fill();
+  noGlow();
+
+  // Label bottom-left
+  ctx.font = 'bold 11px Courier New';
+  ctx.fillStyle = `rgba(${r},${g},${b},0.6)`;
+  ctx.textAlign = 'left';
+  const labelMap = {s:'1s', p:'2p', dz2:'3dz²', dxy:'3dxy', dx2y2:'3dx²-y²', fz3:'4fz³', fxyz:'4fxyz'};
+  ctx.fillText(labelMap[tipo] || tipo, 12, H-14);
+}
+
+// Main loop
+function loop() {
+  requestAnimationFrame(loop);
+  if (!rodando) return;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Subtle grid
+  ctx.strokeStyle = 'rgba(30,41,59,0.5)';
+  ctx.lineWidth = 0.5;
+  for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+  for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+  const e = parseInt(document.getElementById('eletrons').value);
+  const v = parseFloat(document.getElementById('vel').value);
+
+  if (modelo === 'dalton')      desenharDalton(e);
+  else if (modelo === 'thomson')    desenharThomson(e);
+  else if (modelo === 'rutherford') desenharRutherford(e);
+  else if (modelo === 'bohr')       desenharBohr(e);
+  else                              desenharQuantico(e);
+
+  t += v * 0.015;
+}
+
+atualizarInfo();
+loop();
+</script>
+
+</body>
+</html>
